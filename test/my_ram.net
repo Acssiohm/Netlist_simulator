@@ -1,0 +1,5 @@
+INPUT read_addr, write_enable, write_addr, input_write_data
+OUTPUT o
+VAR read_addr:2, write_enable, write_addr:2, input_write_data:4, o:4, _input_write_data_sel_0, _o_sel_0, _l_8, _input_write_data_slc_1_3:3, _o_slc_1_3:3, _l_11, _l_12, _l_13, _l_14:2, _l_15:2, _l_16, _l_17, _l_18, _l_19, _l_20, _l_21, _l_22:2, _l_23:3, _l_24:4
+IN
+o = RAM 2 4 read_addr write_enable write_addr input_write_data
