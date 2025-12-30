@@ -17,7 +17,7 @@ Compilation :
 Execution :
 `./netlist_simulator.byte [-n nombre_de_cycle] fichier_netlist.net`
 OU
-make fichier_netlist
+`make fichier_netlist`
 
 par exemple, pour tester le nadder : 
 `./netlist_simulator.byte ./test/nadder.net`
