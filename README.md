@@ -22,5 +22,5 @@ make fichier_netlist
 par exemple, pour tester le nadder : 
 `./netlist_simulator.byte ./test/nadder.net`
 et
-```make ./test/nadder```
+`make ./test/nadder`
 sont équivalent.
