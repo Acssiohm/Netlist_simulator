@@ -141,20 +141,15 @@ let simulator program number_steps =
     | _ -> ()
   ) program.p_eqs 
   in
-  (* Runs one step *)
-  let run_step () = begin
-    List.iter exec_eq program.p_eqs;
-    update_mem() 
-  end
-  in
   let i = ref 0 in
   while !i <> number_steps do
     print_string "Step "; print_int (!i+1); print_string " :\n" ;
     (* Getting the inputs *)
     List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( value_of_int (Env.find input program.p_vars) (int_of_string (read_line ())))) program.p_inputs;
-    run_step();
+    List.iter exec_eq program.p_eqs;
     (* Writing the outputs *)
     List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
+    update_mem();
     i := !i+1
   done
 
