@@ -50,6 +50,7 @@ let () =
     assert (value_of_int (TBitArray 4) 0b1101 = VBitArray [|true; false; true; true|])
   
 let strip (s : string) : string =
+  if s = "" then "" else 
   let spaces = [' '; '\t'] in
   let i = ref 0 in
   while !i < String.length s && List.mem s.[!i] spaces do
@@ -66,7 +67,8 @@ let () =
   assert (strip " \t Bon  jour  " = "Bon  jour");
   assert (strip "  Bon  jour" = "Bon  jour");
   assert (strip "Bon  jour  " = "Bon  jour");
-  assert (strip "    " = "")
+  assert (strip "    " = "");
+  assert (strip "" = "")
 
 let read_number () =
   int_of_string(strip (read_line ()))
