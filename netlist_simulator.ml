@@ -48,6 +48,28 @@ let value_of_type t =
 
 let () =
     assert (value_of_int (TBitArray 4) 0b1101 = VBitArray [|true; false; true; true|])
+  
+let strip (s : string) : string =
+  let spaces = [' '; '\t'] in
+  let i = ref 0 in
+  while !i < String.length s && List.mem s.[!i] spaces do
+    i := !i + 1
+  done;
+  let j = ref (String.length s - 1) in
+  while List.mem s.[!j] spaces && !j >= !i do
+    j := !j - 1
+  done;
+  String.sub s !i (!j - !i + 1)
+
+let () =
+  assert (strip "  Bonjour  " = "Bonjour");
+  assert (strip " \t Bon  jour  " = "Bon  jour");
+  assert (strip "  Bon  jour" = "Bon  jour");
+  assert (strip "Bon  jour  " = "Bon  jour");
+  assert (strip "    " = "")
+
+let read_number () =
+  int_of_string(strip (read_line ()))
 
 let simulator program number_steps = 
   let vars = Hashtbl.create (List.length program.p_inputs) in
@@ -68,9 +90,9 @@ let simulator program number_steps =
     while not !finish do
       try 
         print_string "Adress ? "; 
-        let a = int_of_string (read_line ()) in
+        let a = read_number () in
         print_string "Value ? ";
-        let v = value_of_int (TBitArray word) (int_of_string (read_line ())) in
+        let v = value_of_int (TBitArray word) (read_number ()) in
         (Hashtbl.find rom x).(a) <- v
       with | Failure s -> if s = "int_of_string" then finish := true else failwith s
     done
@@ -145,7 +167,7 @@ let simulator program number_steps =
   while !i <> number_steps do
     print_string "Step "; print_int (!i+1); print_string " :\n" ;
     (* Getting the inputs *)
-    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( value_of_int (Env.find input program.p_vars) (int_of_string (read_line ())))) program.p_inputs;
+    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( value_of_int (Env.find input program.p_vars) (read_number ()))) program.p_inputs;
     List.iter exec_eq program.p_eqs;
     (* Writing the outputs *)
     List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
