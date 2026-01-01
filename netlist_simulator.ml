@@ -3,10 +3,11 @@ open Netlist_ast
 let print_only = ref false
 let number_steps = ref (-1)
 
-let value_of_int t n =
+let rec value_of_int t n =
   match t with
     | TBit -> if n <> 0 && n <> 1 then failwith "Wrong input" else VBit (n = 1)
-    | TBitArray k -> if n < 0 || n >= (1 lsl k) then failwith "Wrong input" else 
+    | TBitArray k -> if n > (1 lsl k) - 1 || n < - ( 1 lsl (k-1))  then failwith ("Wrong input") else
+      if n < 0 then (value_of_int t ( (1 lsl k) + n )) else 
       VBitArray (Array.init k (fun i -> ((n lsr i) land 1) = 1 ))
 
 let int_of_bool b = if b then 1 else 0
@@ -36,10 +37,11 @@ let array_of_value v =
 let print_value v =
     let x = int_of_value v in
     let a = array_of_value v in
+    let n = Array.length a in 
+    assert (n <= Sys.int_size);
+    let mask = if a.(n-1) then lnot ( (1 lsl n) - 1 ) else 0 in 
     let s = Array.fold_left (fun x y -> y^x ) "" (Array.map (fun b -> if b then "1" else "0") a) in
-    print_int x; print_string (" (0b"^s^")")
-    
-
+    print_int(x lor mask) ; print_string "  u" ;print_int x; print_string (" (0b"^s^")")
   
 let value_of_type t =
   match t with
@@ -73,6 +75,12 @@ let () =
 let read_number () =
   int_of_string(strip (read_line ()))
 
+let read_value t =
+  let res = value_of_int t (read_number ()) in
+  print_value res;
+  print_newline ();
+  res
+
 let simulator program number_steps = 
   let vars = Hashtbl.create (List.length program.p_inputs) in
   let ram =  Hashtbl.create 5 in 
@@ -94,7 +102,7 @@ let simulator program number_steps =
         print_string "Adress ? "; 
         let a = read_number () in
         print_string "Value ? ";
-        let v = value_of_int (TBitArray word) (read_number ()) in
+        let v = read_value (TBitArray word) in
         (Hashtbl.find rom x).(a) <- v
       with | Failure s -> if s = "int_of_string" then finish := true else failwith s
     done
@@ -169,7 +177,7 @@ let simulator program number_steps =
   while !i <> number_steps do
     print_string "Step "; print_int (!i+1); print_string " :\n" ;
     (* Getting the inputs *)
-    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( value_of_int (Env.find input program.p_vars) (read_number ()))) program.p_inputs;
+    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( read_value (Env.find input program.p_vars))) program.p_inputs;
     List.iter exec_eq program.p_eqs;
     (* Writing the outputs *)
     List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
