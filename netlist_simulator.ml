@@ -177,7 +177,8 @@ let simulator program number_steps =
   while !i <> number_steps do
     print_string "Step "; print_int (!i+1); print_string " :\n" ;
     (* Getting the inputs *)
-    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( read_value (Env.find input program.p_vars))) program.p_inputs;
+    (if program.p_inputs = [] then ignore (read_line()) else
+    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( read_value (Env.find input program.p_vars))) program.p_inputs);
     List.iter exec_eq program.p_eqs;
     (* Writing the outputs *)
     List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
