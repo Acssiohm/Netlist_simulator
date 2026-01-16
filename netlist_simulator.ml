@@ -96,14 +96,26 @@ let simulator program number_steps =
     Hashtbl.replace rom x (Array.init (1 lsl addr) (fun _ -> VBitArray (Array.make word false)));
     print_endline ("Enter values for the ROM '"^x^"' (or enter to end) :");
     print_endline ("Adress size is "^(string_of_int addr)^". Word size is "^(string_of_int word));
+    print_string "Get from file (or enter to put manually):";
+    let filename = read_line() in 
+    let ch =  if filename = "" then Stdlib.stdin else Stdlib.open_in filename in 
     let finish = ref false in
+    let i = ref 0 in 
     while not !finish do
-      try 
-        print_string "Adress ? "; 
-        let a = read_number () in
-        print_string "Value ? ";
-        let v = read_value (TBitArray word) in
-        (Hashtbl.find rom x).(a) <- v
+      try
+        if filename = "" then Printf.printf ">>>%!"; 
+        let e = strip (Stdlib.input_line ch) in
+        let s, is_address = if e <> "" && e.[0] = '.' then (String.sub e 1 ((String.length e)  - 1), true) else (e, false) in
+        let n = int_of_string s in
+        if is_address then (
+          assert ( n mod 4 = 0); 
+          i := n / 4 )
+        else 
+          (
+          let v =  value_of_int (TBitArray word) n in
+          (Hashtbl.find rom x).(!i) <- v;
+          i := !i+1
+        )
       with | Failure s -> if s = "int_of_string" then finish := true else failwith s
     done
   end
