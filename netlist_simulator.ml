@@ -85,9 +85,19 @@ let simulator program number_steps =
   let vars = Hashtbl.create (List.length program.p_inputs) in
   let ram =  Hashtbl.create 5 in 
   let rom =  Hashtbl.create 3 in
+  let mem_map = ref [] in 
   (* Create the RAMs *)
   List.iter (fun (x,e) -> match e with 
-  | Eram (addr,word,_,_,_,_) -> Hashtbl.replace ram x (Array.init (1 lsl addr) (fun _ -> value_of_type (TBitArray word) ))
+  | Eram (addr,word,_,_,_,_) -> 
+    print_endline ("Set some adresses of the RAM "^x^" as output :");
+    (try 
+    while true do
+      let n = read_number() in
+      assert (n mod 4 = 0);
+      mem_map := (n/4, x)::!mem_map
+    done
+    with | Failure s -> if s = "int_of_string" then () else failwith s );
+    Hashtbl.replace ram x (Array.init (1 lsl addr) (fun _ -> value_of_type (TBitArray word) ))
   | _ -> () 
   ) program.p_eqs;
   (* Create and initialize ROMs with user inputs *)
@@ -194,6 +204,7 @@ let simulator program number_steps =
     List.iter exec_eq program.p_eqs;
     (* Writing the outputs *)
     List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
+    List.iter (fun (addr, x) -> print_string ("--> "); print_value (Hashtbl.find ram x).(addr); print_newline () ) (List.rev !mem_map) ;
     update_mem();
     i := !i+1
   done
