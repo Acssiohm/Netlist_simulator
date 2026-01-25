@@ -2,6 +2,7 @@ open Netlist_ast
 
 let print_only = ref false
 let number_steps = ref (-1)
+let delay = ref (0)
 
 let rec value_of_int t n =
   match t with
@@ -196,17 +197,20 @@ let simulator program number_steps =
   ) program.p_eqs 
   in
   let i = ref 0 in
+  let last_time = ref (Sys.time()) in
   while !i <> number_steps do
-    print_string "Step "; print_int (!i+1); print_string " :\n" ;
-    (* Getting the inputs *)
-    (if program.p_inputs = [] then ignore (read_line()) else
-    List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( read_value (Env.find input program.p_vars))) program.p_inputs);
-    List.iter exec_eq program.p_eqs;
-    (* Writing the outputs *)
-    List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
-    List.iter (fun (addr, x) -> print_string ("--> "); print_value (Hashtbl.find ram x).(addr); print_newline () ) (List.rev !mem_map) ;
-    update_mem();
-    i := !i+1
+    if (Sys.time() -. !last_time) *. 1000.0 >= float_of_int !delay then 
+      (last_time := Sys.time();
+      print_string "Step "; print_int (!i+1); print_string " :\n" ;
+      (* Getting the inputs *)
+      (if program.p_inputs = [] then () else
+      List.iter (fun input -> print_string (input^" ? "); Hashtbl.replace vars input ( read_value (Env.find input program.p_vars))) program.p_inputs);
+      List.iter exec_eq program.p_eqs;
+      (* Writing the outputs *)
+      List.iter (fun output -> print_string ("=> "^output^" = "); print_value (Hashtbl.find vars output); print_newline () ) program.p_outputs;
+      List.iter (fun (addr, x) -> print_string ("--> "); print_value (Hashtbl.find ram x).(addr); print_newline () ) (List.rev !mem_map) ;
+      update_mem();
+      i := !i+1)
   done
 
 let compile filename =
@@ -224,7 +228,8 @@ let compile filename =
 
 let main () =
   Arg.parse
-    ["-n", Arg.Set_int number_steps, "Number of steps to simulate"]
+    ["-n", Arg.Set_int number_steps, "Number of steps to simulate";
+     "-d", Arg.Set_int delay, "Clock period"]
     compile
     ""
 ;;
